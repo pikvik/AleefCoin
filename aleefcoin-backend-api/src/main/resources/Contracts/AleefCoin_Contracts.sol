@@ -1,114 +1,191 @@
 pragma solidity ^0.4.11;
 
-interface ERC20 {
-	function name() public  returns (string coinName);
-	function symbol() public  returns (string decimals);
-    	function decimals() public  returns (uint8 decimals);
-    	function totalSupply() public  returns (uint256 totalSupply);
-    	function transfer(address _to, uint256 _value) public returns (bool success);
-   	function burn( uint256 _value) public returns (bool success);
-    	function mint(address target, uint256 _value) public returns (bool success);
-    	function transferFrom(address _from, address _to, uint256 _value) public returns (bool success); 
-	function approve(address _spender, uint256 _value) public returns (bool success);
-    	function allowance(address _owner, address _spender) public  returns (uint256 remaining);
+contract Owned {
+
+    address public owner;
+
+    function Owned() {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function setOwner(address _newOwner) onlyOwner {
+	if(_newOwner == 0x0)revert();
+        owner = _newOwner;
+    }
 }
 
-contract AleefCoin is ERC20 {
-	uint public  _totalSupply;
-    	uint8 public  _decimals = 4;
-    	string public  symbol;
-    	string public  name;
-    	uint256 public deleteToken;
-    	uint256 public mintAmount;
-    	uint256 public soldToken;
-  	
-	/* This creates an array with all balances */
-    	mapping(address => mapping(address => uint256)) approved;
-    	mapping (address => uint256) public balanceOf;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-	/* Initializes contract with initial supply tokens to the creator of the contract */
-    	function AleefCoin(string coinName,string coinSymbol,uint initialSupply) {         
-      
-        _totalSupply = initialSupply *10**uint256(_decimals);                        // Update total supply
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); 					// Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); 			// There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+
+  function toUINT112(uint256 a) internal constant returns(uint112) {
+    assert(uint112(a) == a);
+    return uint112(a);
+  }
+
+  function toUINT120(uint256 a) internal constant returns(uint120) {
+    assert(uint120(a) == a);
+    return uint120(a);
+  }
+
+  function toUINT128(uint256 a) internal constant returns(uint128) {
+    assert(uint128(a) == a);
+    return uint128(a);
+  }
+}
+
+// Abstract contract for the full ERC 20 Token standard
+// https://github.com/ethereum/EIPs/issues/20
+
+contract Token {
+ 
+    function totalSupply() public  returns (uint256 supply);
+	 
+    function transfer(address _to, uint256 _value) returns (bool success);
+
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+
+    function approve(address _spender, uint256 _value) returns (bool success);
+  
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+  
+    function burn( uint256 _value) public returns (bool success);
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+  
+    event Burn(address indexed from, uint256 value);
+}
+
+
+
+contract Aleefcoin is Token, Owned {
+    using SafeMath for uint256;
+  
+    uint public  _totalSupply;
+  
+    string public   name;         					//The Token's name
+  
+    uint8 public constant decimals = 4;    				//Number of decimals of the smallest unit
+  
+    string public  symbol;    						//The Token's symbol 
+  
+    uint256 public mintCount;
+  
+    uint256 public deleteToken;
+  
+    uint256 public soldToken;
+
+   
+    mapping (address => uint256) public balanceOf;
+
+    // Owner of account approves the transfer of an amount to another account
+    mapping(address => mapping(address => uint256)) allowed;
+
+    // Constructor
+    function Aleefcoin(string coinName,string coinSymbol,uint initialSupply) {
+        _totalSupply = initialSupply *10**uint256(decimals);             // Update total supply
         balanceOf[msg.sender] = _totalSupply; 
-        name = coinName;                                   			     // Set the name for display purposes
-        symbol =coinSymbol;                                                          // Set the symbol for display purposes
-    	}
+        name = coinName;                                   		// Set the name for display purposes
+        symbol =coinSymbol;   
+        
+    }
+
+   function totalSupply()  public  returns (uint256 totalSupply) {
+        return _totalSupply;
+    }
 	
-	function name() public  returns (string coinName){
- 		return name;
-	}
+    // Send back ether sent to me
+    function () {
+        revert();
+    }
 
-	function symbol() public  returns (string decimals){
-		return symbol;
-	}
+    // Transfer the balance from owner's account to another account
+    function transfer(address _to, uint256 _amount) returns (bool success) {
+        // according to AssetToken's total supply, never overflow here
+        if (balanceOf[msg.sender] >= _amount && _amount > 0) {            
+            balanceOf[msg.sender] -= uint112(_amount);
+            balanceOf[_to] = _amount.add(balanceOf[_to]).toUINT112();
+            soldToken = _amount.add(soldToken).toUINT112();
+            Transfer(msg.sender, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-    	function decimals() public  returns (uint8 decimals) {
-        	return _decimals;
-    	}
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) returns (bool success) {
+        // according to AssetToken's total supply, never overflow here
+        if (balanceOf[_from] >= _amount
+            && allowed[_from][msg.sender] >= _amount
+            && _amount > 0) {
+            balanceOf[_from] = balanceOf[_from].sub(_amount).toUINT112();
+            allowed[_from][msg.sender] -= _amount;
+            balanceOf[_to] = _amount.add(balanceOf[_to]).toUINT112();
+            Transfer(_from, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-    	function totalSupply() public  returns (uint256 totalSupply) {
-        	return _totalSupply;
-    	}
+    function approve(address _spender, uint256 _amount) returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
+    }
 
-	/* Send coins */
-       function transfer(address _to, uint256 _value) public returns (bool success) {
-        	require(balanceOf[msg.sender] >= _value && _value > 0);
-            	if (_to == 0x0) revert();  
-        	balanceOf[msg.sender] -= _value;
-        	balanceOf[_to] += _value;
-        	soldToken = soldToken + _value;
-        	Transfer(msg.sender, _to, _value);
-        	return true;
-	}
-    
-    	function burn(uint256 _count) public returns (bool success) {
-        	require(_count >0 );
-        	if(deleteToken <0 )revert();					// Check if the sender has enough
-        	balanceOf[msg.sender] -= _count;				// Subtract from the sender
-        	Burn(msg.sender, _count);
-        	deleteToken = deleteToken + _count;				// Updates totalSupply 
-        	//burnToken = deleteToken;
-		return true;
-    	}
-    
-     	function mint(address target,uint256 _mintCount) public returns (bool success) {
-     		require(_mintCount >0 );
-         	if (target == 0x0) revert();  
-         	balanceOf[msg.sender] += _mintCount;
-       		mintAmount = mintAmount + _mintCount;
-	    	return true;
-    	}
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
 
-	/* A contract attempts to get the coins */    
-     	function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-	  	if (_from == 0x0) revert();					// Prevent transfer to 0x0 address. 
-	   	if (_to == 0x0) revert();  
-        	require(approved[_from][msg.sender] >= _value && balanceOf[_from] >= _value && _value > 0);
-        	balanceOf[_from] -= _value;					// Check if the sender has enough
-        	balanceOf[_to] += _value;					// Check for overflows
-        	approved[_from][msg.sender] -= _value;				// Check allowance
-        	Transfer(_from, _to, _value);
-        	return true;
-    	}
+    //Mint tokens and assign to some one
+    function mint(address _owner, uint256 _amount) onlyOwner{
+     
+            balanceOf[_owner] = _amount.add(balanceOf[_owner]).toUINT112();
+            mintCount =  _amount.add(mintCount).toUINT112();
+    }
 
-	/* Allow another contract to spend some tokens in your behalf */
-    	function approve(address _spender, uint256 _value) public returns (bool success) {
-	 	if (_spender == 0x0) revert(); 
-	  	require(_value >0 );
-        	approved[msg.sender][_spender] = _value;
-        	return true;
-    	}
-
-	function allowance(address _owner, address _spender) public  returns (uint256 remaining) {
-   		if (_owner == 0x0) revert();
-    		if (_spender == 0x0) revert(); 
-        	return approved[_owner][_spender];
-    	}
-
-	/* This generates a public event on the blockchain that will notify clients */  
-  	event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
-	/* This notifies clients about the amount burnt */
-  	event Burn(address indexed from, uint256 value);
+  function burn(uint256 _count) public returns (bool success)
+  {
+          balanceOf[msg.sender] -=uint112( _count);
+          deleteToken = _count.add(deleteToken).toUINT112();
+          Burn(msg.sender, _count);
+		  return true;
+    }  
 }
