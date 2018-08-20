@@ -106,26 +106,23 @@ class UserDashboard extends React.Component {
     }
     preSaleOffer() {
         let dt = new Date();
-        if (moment(dt).format('L') < '08/25/2018') {
+        if (moment(dt).format('L') < '08/19/2018') {
             this.setState({ saleOffer: 0.25 })
         }
-        else if ('08/24/2018' < moment(dt).format('L') > '08/19/2018') {
-            this.setState({ saleOffer: 0.50 })
-        }
         else if ('08/18/2018' < moment(dt).format('L') > '09/08/2018') {
-            this.setState({ saleOffer: 0.70 })
+            this.setState({ saleOffer: 0.30 })
         }
         else if ('09/07/2018' < moment(dt).format('L') > '09/23/2018') {
-            this.setState({ saleOffer: 0.90 })
+            this.setState({ saleOffer: 0.40 })
         }
         else if ('09/22/2018' < moment(dt).format('L') > '10/05/2018') {
-            this.setState({ saleOffer: 1.0 })
+            this.setState({ saleOffer: 0.50 })
         }
         else if ('10/04/2018' < moment(dt).format('L') > '10/15/2018') {
-            this.setState({ saleOffer: 1.1 })
+            this.setState({ saleOffer: 0.60 })
         }
         else if ('10/14/2018' < moment(dt).format('L') > '10/23/2018') {
-            this.setState({ saleOffer: 1.2 })
+            this.setState({ saleOffer: 0.70 })
         }
     }
     refLinkclick() {
