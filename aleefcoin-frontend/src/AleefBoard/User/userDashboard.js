@@ -106,23 +106,23 @@ class UserDashboard extends React.Component {
     }
     preSaleOffer() {
         let dt = new Date();
-        if (moment(dt).format('L') < '08/19/2018') {
-            this.setState({ saleOffer: 0.25 })
+        if (moment(dt).format('L') < 'MM/DD/YYYY') {
+            this.setState({ saleOffer: xxx })					//xxx denotes the offer amount
         }
-        else if ('08/18/2018' < moment(dt).format('L') > '09/08/2018') {
-            this.setState({ saleOffer: 0.30 })
+        else if ('MM/DD/YYYY' < moment(dt).format('L') > 'MM/DD/YYYY') {
+            this.setState({ saleOffer: xxx })					//xxx denotes the offer amount
         }
-        else if ('09/07/2018' < moment(dt).format('L') > '09/23/2018') {
-            this.setState({ saleOffer: 0.40 })
+        else if ('MM/DD/YYYY' < moment(dt).format('L') > 'MM/DD/YYYY') {
+            this.setState({ saleOffer: xxx })					//xxx denotes the offer amount
         }
-        else if ('09/22/2018' < moment(dt).format('L') > '10/05/2018') {
-            this.setState({ saleOffer: 0.50 })
+        else if ('MM/DD/YYYY' < moment(dt).format('L') > 'MM/DD/YYYY') {
+            this.setState({ saleOffer: xxx })					//xxx denotes the offer amount
         }
-        else if ('10/04/2018' < moment(dt).format('L') > '10/15/2018') {
-            this.setState({ saleOffer: 0.60 })
+        else if ('MM/DD/YYYY' < moment(dt).format('L') > 'MM/DD/YYYY') {
+            this.setState({ saleOffer: xxx })					//xxx denotes the offer amount
         }
-        else if ('10/14/2018' < moment(dt).format('L') > '10/23/2018') {
-            this.setState({ saleOffer: 0.70 })
+        else if ('MM/DD/YYYY' < moment(dt).format('L') > 'MM/DD/YYYY') {
+            this.setState({ saleOffer: xxx })					//xxx denotes the offer amount
         }
     }
     refLinkclick() {
